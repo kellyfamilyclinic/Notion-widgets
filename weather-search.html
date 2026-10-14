@@ -47,16 +47,22 @@
   .deg{display:flex;flex-direction:column;margin:0 -15px}
   .deg>div{padding:0 15px}
 
-  /* the place name doubles as the search box */
-  .place{cursor:pointer;border-bottom:1px dotted transparent}
-  .place:hover{border-bottom-color:#c7c6c3}
-  .search{position:relative;width:170px}
-  .search input{width:100%;border:0;border-bottom:1px solid #d3d1cb;outline:none;background:transparent;
-    font:inherit;font-size:15px;line-height:18px;font-weight:700;color:#37352f;text-align:center;text-transform:uppercase;padding:0 0 1px}
-  .min .search input{font-size:12px}
-  .min .search{width:130px}
-  .search input::placeholder{color:#b4b3af;font-weight:500;text-transform:none}
-  .results{position:absolute;left:-30px;right:-30px;top:calc(100% + 4px);background:#fff;border:1px solid #e9e9e7;
+  /* search: a faint magnifier in the top-right corner opens a bar over the widget,
+     so the widget itself keeps the same size and layout as the Seguin one.
+     Clicking the place name opens it too. */
+  .place{cursor:pointer}
+  .sbtn{position:fixed;top:6px;right:8px;z-index:20;width:24px;height:24px;border:0;border-radius:50%;
+    background:#fff;color:#b4b3af;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+  .sbtn:hover{color:#37352f;background:#f1f1ef}
+  .sbar{position:fixed;top:6px;left:8px;right:8px;z-index:21;display:none}
+  .sbar.open{display:block}
+  .sbar input{width:100%;height:30px;border:1px solid #e9e9e7;border-radius:6px;outline:none;background:#fff;
+    box-shadow:0 2px 8px rgba(15,15,15,.08);font:inherit;font-size:13px;color:#37352f;padding:0 30px 0 10px}
+  .sbar input:focus{border-color:#c7c6c3}
+  .sbar input::placeholder{color:#b4b3af}
+  .sbar .x{position:absolute;right:4px;top:3px;width:24px;height:24px;border:0;background:none;color:#9b9a97;
+    font-size:16px;line-height:24px;cursor:pointer;padding:0}
+  .results{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #e9e9e7;
     border-radius:6px;box-shadow:0 6px 18px rgba(15,15,15,.1);z-index:10;overflow:hidden;display:none;text-align:left}
   .results button{display:block;width:100%;text-align:left;padding:7px 10px;border:0;background:none;
     color:#37352f;font:inherit;font-size:13px;line-height:1.3;cursor:pointer}
@@ -134,24 +140,36 @@ function load(){try{return JSON.parse(localStorage.getItem("tripWeatherPlace"))}
 const label=p=>[p.name,p.admin1&&p.admin1!==p.name?p.admin1:null,p.country_code!=="US"?p.country:null].filter(Boolean).join(", ");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
+/* build the search button and bar once */
+document.body.insertAdjacentHTML("beforeend",`
+  <button class="sbtn" id="sbtn" title="Search for a place" aria-label="Search for a place">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+  </button>
+  <div class="sbar" id="sbar">
+    <input id="q" type="text" placeholder="Search a city (e.g. Rockport, TX)" autocomplete="off" aria-label="Search location">
+    <button class="x" id="sx" aria-label="Close search">×</button>
+    <div class="results" id="results"></div>
+  </div>`);
+const sbar=document.getElementById("sbar"), sbtn=document.getElementById("sbtn");
+input=document.getElementById("q"); box=document.getElementById("results");
+sbtn.onclick=openSearch;
+document.getElementById("sx").onclick=closeSearch;
+input.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>search(false),300)});
+input.addEventListener("keydown",e=>{
+  if(e.key==="ArrowDown"&&matches.length){active=(active+1)%matches.length;list();e.preventDefault()}
+  else if(e.key==="ArrowUp"&&matches.length){active=(active-1+matches.length)%matches.length;list();e.preventDefault()}
+  else if(e.key==="Enter"){e.preventDefault(); if(active>=0&&matches[active]) choose(matches[active]); else search(true)}
+  else if(e.key==="Escape"&&place){closeSearch()}
+});
+input.addEventListener("blur",()=>setTimeout(()=>{if(place&&document.activeElement!==input&&!input.value.trim())closeSearch()},200));
+box.addEventListener("mousedown",e=>{const b=e.target.closest("button"); if(b){e.preventDefault();choose(matches[+b.dataset.i])}});
+
 function showName(){
   slot.innerHTML=`<b class="place" title="${esc(label(place))} — click to change">${esc(place.name.toUpperCase())}</b>`;
   slot.querySelector(".place").onclick=openSearch;
 }
-function openSearch(){
-  slot.innerHTML=`<div class="search"><input id="q" type="text" placeholder="Type a city…" autocomplete="off" aria-label="Search location"><div class="results" id="results"></div></div>`;
-  input=document.getElementById("q"); box=document.getElementById("results");
-  input.focus();
-  input.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>search(false),300)});
-  input.addEventListener("keydown",e=>{
-    if(e.key==="ArrowDown"&&matches.length){active=(active+1)%matches.length;list();e.preventDefault()}
-    else if(e.key==="ArrowUp"&&matches.length){active=(active-1+matches.length)%matches.length;list();e.preventDefault()}
-    else if(e.key==="Enter"){e.preventDefault(); if(active>=0&&matches[active]) choose(matches[active]); else search(true)}
-    else if(e.key==="Escape"&&place){matches=[];showName()}
-  });
-  input.addEventListener("blur",()=>setTimeout(()=>{if(place&&input&&document.activeElement!==input&&!input.value.trim())showName()},200));
-  box.addEventListener("mousedown",e=>{const b=e.target.closest("button"); if(b){e.preventDefault();choose(matches[+b.dataset.i])}});
-}
+function openSearch(){ sbar.classList.add("open"); sbtn.style.display="none"; input.value=""; matches=[]; list(); input.focus() }
+function closeSearch(){ if(!place) return; sbar.classList.remove("open"); sbtn.style.display=""; matches=[]; list(); input.blur() }
 function list(){
   if(!matches.length){box.style.display="none";return}
   box.innerHTML=matches.map((p,i)=>`<button data-i="${i}" class="${i===active?"active":""}">${esc(label(p))}${p.population?` <small>· pop. ${p.population.toLocaleString()}</small>`:""}</button>`).join("");
@@ -180,7 +198,7 @@ async function search(pickFirst){
 function setMsg(m){document.getElementById("nowDesc").innerHTML=`<div class="msg">${m}</div>`}
 function choose(p){
   matches=[]; place={name:p.name,admin1:p.admin1,country:p.country,country_code:p.country_code,latitude:p.latitude,longitude:p.longitude};
-  store(place); showName(); forecast();
+  store(place); showName(); closeSearch(); forecast();
 }
 
 /* ---------- forecast ---------- */
