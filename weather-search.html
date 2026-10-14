@@ -5,160 +5,204 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Trip Weather</title>
 <style>
-  :root{ --text:#37352f; --muted:#9b9a97; --line:#e9e9e7; --bg:#ffffff; --hover:#f1f1ef; }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px}
-  .wrap{max-width:320px;margin:0 auto;padding:12px 14px 16px;text-align:center}
+  html,body{height:100%;margin:0;background:#fff;color:#37352f;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
+    font-size:16px;font-weight:400;line-height:1.55}
+  body{display:flex;flex-direction:column}
+  .content{flex:1 1 0%;min-height:0;width:100%;overflow-y:auto}
+  .foot{height:26px;flex:0 0 26px}            /* same bottom space as the Seguin widget */
+  .center{height:100%;display:flex;justify-content:center;flex:1 1 0%;padding:16px}
+  .wx{display:flex;flex:1 1 0%;flex-direction:column;margin:auto 0}
+  .cur{display:flex;flex-direction:column;margin:20px 0 10px;padding-bottom:15px}
+  .cur>.inner{display:flex;flex-direction:column;margin:20px 0 10px}
+  .row{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 15px}
+  .row.temps{margin:5px 0}
+  .t{font-size:15px;line-height:18px;font-weight:500;text-align:center;margin:0;white-space:nowrap}
+  .t.light{font-weight:100;padding-top:1px}
+  .t.big{font-size:24px;line-height:28.8px}
+  .t.hi{font-weight:600}
+  .icon{width:50px;height:50px;display:block}
+  .daily{display:flex;flex-direction:column;margin:0 0 32px}
+  .days{display:flex;flex-direction:column;flex:1 1 0%;justify-content:space-evenly;padding:0 8px}
+  .day{display:flex;flex-direction:row;justify-content:center;align-items:center;margin:7px 0;padding:0 15px}
+  .day .name{padding-left:3px;letter-spacing:1px}
+  .day .iw{width:70px;height:50px;padding:0 10px}
+  .deg{display:flex;flex-direction:column;margin:0 -15px}
+  .deg>div{padding:0 15px}
 
-  .search{position:relative;margin:0 auto 14px;max-width:240px}
-  .search input{width:100%;padding:6px 26px 6px 4px;border:0;border-bottom:1px solid var(--line);
-    background:transparent;color:var(--text);font:inherit;font-size:13px;text-align:center;outline:none}
-  .search input::placeholder{color:var(--muted)}
-  .search input:focus{border-bottom-color:var(--text)}
-  .search .go{position:absolute;right:0;top:50%;transform:translateY(-50%);border:0;background:none;
-    color:var(--muted);cursor:pointer;padding:4px;line-height:0}
-  .results{position:absolute;left:-20px;right:-20px;top:calc(100% + 4px);background:var(--bg);border:1px solid var(--line);
+  /* medium widths: current conditions and the 3 days each go side by side */
+  .w-md .cur,.w-md .cur>.inner{flex-direction:row;justify-content:space-evenly}
+  .w-md .days{flex-direction:row}
+  .w-md .day{flex-direction:column;margin:0}
+  .w-md .day .name{padding-left:0}
+  .w-md .deg{margin:0 -15px}
+  /* wide: everything in one row, full day names */
+  .wx.w-lg{flex-direction:row}
+  .w-lg .daily{flex:1 1 0%}
+  .w-lg .cur,.w-lg .cur>.inner{flex-direction:row;justify-content:space-evenly;margin:0;padding:0}
+  .w-lg .daily{margin:0}
+  .w-lg .days{flex-direction:row;padding:0}
+  .w-lg .day{flex-direction:column;margin:0}
+  .w-lg .day .name{padding-left:0}
+
+  /* the place name doubles as the search box */
+  .place{cursor:pointer;border-bottom:1px dotted transparent}
+  .place:hover{border-bottom-color:#c7c6c3}
+  .search{position:relative;width:170px}
+  .search input{width:100%;border:0;border-bottom:1px solid #d3d1cb;outline:none;background:transparent;
+    font:inherit;font-size:15px;line-height:18px;font-weight:700;color:#37352f;text-align:center;text-transform:uppercase;padding:0 0 1px}
+  .search input::placeholder{color:#b4b3af;font-weight:500;text-transform:none}
+  .results{position:absolute;left:-30px;right:-30px;top:calc(100% + 4px);background:#fff;border:1px solid #e9e9e7;
     border-radius:6px;box-shadow:0 6px 18px rgba(15,15,15,.1);z-index:10;overflow:hidden;display:none;text-align:left}
-  .results button{display:block;width:100%;text-align:left;padding:8px 10px;border:0;background:none;
-    color:var(--text);font:inherit;font-size:13px;cursor:pointer}
-  .results button:hover,.results button.active{background:var(--hover)}
-  .results small{color:var(--muted)}
-
-  .place{font-weight:700;text-transform:uppercase;line-height:1.25}
-  .label{font-weight:100;line-height:1.25}
-  .big{margin:10px auto 6px;width:50px;height:50px}
-  .temp{font-size:24px;font-weight:500;margin-top:14px}
-  .desc{font-weight:500;margin-top:2px}
-  .extra{font-size:12px;color:var(--muted);margin-top:8px}
-
-  .days{margin:26px auto 0;max-width:200px}
-  .day{display:grid;grid-template-columns:1fr 50px 1fr;align-items:center;gap:8px;margin-bottom:22px}
-  .day .d{font-weight:500;letter-spacing:1px;text-align:center}
-  .day svg{width:30px;height:30px;margin:0 auto;display:block}
-  .day .hl{text-align:left;line-height:1.3}
-  .day .hi{font-weight:600}
-  .day .lo{font-weight:500}
-  .msg{color:var(--muted);font-size:13px;padding:24px 4px}
+  .results button{display:block;width:100%;text-align:left;padding:7px 10px;border:0;background:none;
+    color:#37352f;font:inherit;font-size:13px;line-height:1.3;cursor:pointer}
+  .results button:hover,.results button.active{background:#f1f1ef}
+  .results small{color:#9b9a97}
+  .msg{font-size:13px;line-height:18px;color:#9b9a97;text-align:center;padding-top:6px;white-space:normal}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="search">
-    <input id="q" type="text" placeholder="Search a place…" autocomplete="off" aria-label="Search location">
-    <button class="go" id="go" aria-label="Search">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    </button>
-    <div class="results" id="results"></div>
-  </div>
-  <div id="out"><div class="msg">Search for a place to see its forecast.</div></div>
-</div>
+<div class="content"><div class="center"><div class="wx" id="wx">
+  <div class="cur"><div class="inner">
+    <div class="row">
+      <h4 class="t" id="nameSlot"></h4>
+      <h4 class="t light">WEATHER</h4>
+    </div>
+    <div class="row" id="nowIcon"></div>
+    <div class="row temps">
+      <h4 class="t big" id="nowTemp"></h4>
+      <h4 class="t" id="nowDesc"></h4>
+    </div>
+  </div></div>
+  <div class="daily"><div class="days" id="days"></div></div>
+</div></div></div>
+<div class="foot"></div>
 
 <script>
-const STATES={AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming",DC:"District of Columbia"};
-
-/* Simple flat icons: orange sun, blue cloud */
-const SUN='#f7a823', CLOUD='#5aa0ea', LIGHT='#c9def7', DROP='#8fbdf0';
-const sun=(cx,cy,r)=>{let s=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${SUN}"/>`;
-  for(let i=0;i<8;i++){const a=i*Math.PI/4,x1=cx+Math.cos(a)*(r+3),y1=cy+Math.sin(a)*(r+3),x2=cx+Math.cos(a)*(r+7),y2=cy+Math.sin(a)*(r+7);
-    s+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${SUN}" stroke-width="2.4" stroke-linecap="round"/>`}
-  return s};
-const cloud=(dx,dy,c)=>`<path transform="translate(${dx} ${dy})" fill="${c}" d="M14 38h22a9 9 0 0 0 0-18 12 12 0 0 0-23-2A10 10 0 0 0 14 38z"/>`;
-const drops=`<path d="M20 42l-2 6M28 42l-2 6M36 42l-2 6" stroke="${DROP}" stroke-width="2.4" stroke-linecap="round"/>`;
-const bolt=`<path d="M27 40l-5 8h5l-3 7 8-10h-5l3-5z" fill="${SUN}"/>`;
-const flakes=`<g fill="${DROP}"><circle cx="19" cy="46" r="2"/><circle cx="27" cy="49" r="2"/><circle cx="35" cy="46" r="2"/></g>`;
-const fog=`<path d="M10 22h30M6 30h38M12 38h28" stroke="${LIGHT}" stroke-width="4" stroke-linecap="round"/>`;
-function icon(c){
-  let b;
-  if(c===0) b=sun(25,25,10);
-  else if(c===1||c===2) b=sun(18,16,8)+cloud(4,6,CLOUD);
-  else if(c===3) b=cloud(-6,2,LIGHT)+cloud(2,6,CLOUD);
-  else if(c===45||c===48) b=fog;
-  else if(c>=95) b=cloud(0,-2,CLOUD)+bolt;
-  else if((c>=71&&c<=77)||c===85||c===86) b=cloud(0,-2,CLOUD)+flakes;
-  else if(c>=51) b=cloud(0,-2,CLOUD)+drops;
-  else b=cloud(0,4,CLOUD);
-  return `<svg viewBox="0 0 50 50" aria-hidden="true">${b}</svg>`;
+/* ---------- icons (original artwork: flat sun / cloud with a soft shadow) ---------- */
+const SUN="#f8a21d", CLOUD="#59a0ec", PALE="#c6dcf7", DROP="#7fb5ef";
+function sunArt(cx,cy,r){let s=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${SUN}"/>`;
+  for(let i=0;i<8;i++){const a=i*Math.PI/4,c=Math.cos(a),n=Math.sin(a);
+    s+=`<line x1="${(cx+c*(r+2.2)).toFixed(1)}" y1="${(cy+n*(r+2.2)).toFixed(1)}" x2="${(cx+c*(r+4.6)).toFixed(1)}" y2="${(cy+n*(r+4.6)).toFixed(1)}" stroke="${SUN}" stroke-width="1.7" stroke-linecap="round"/>`}
+  return s}
+const moonArt=(cx,cy,r)=>`<path fill="${SUN}" d="M${cx+r*.25} ${cy-r} a${r} ${r} 0 1 0 ${r*.75} ${r*1.55} a${r*.8} ${r*.8} 0 0 1 -${r*.75} -${r*1.55}z"/>`;
+const cloudArt=(x,y,s,c)=>`<path fill="${c}" transform="translate(${x} ${y}) scale(${s})" d="M7 22h17a6 6 0 0 0 .6-12A8 8 0 0 0 9.2 9.4 6.4 6.4 0 0 0 7 22z"/>`;
+const rain=`<path d="M19 35.5l-1 3M25 35.5l-1 3M31 35.5l-1 3" stroke="${DROP}" stroke-width="1.5" stroke-linecap="round"/>`;
+const snow=`<g fill="${DROP}"><circle cx="19" cy="37" r="1.3"/><circle cx="25" cy="38.5" r="1.3"/><circle cx="31" cy="37" r="1.3"/></g>`;
+const bolt=`<path fill="${SUN}" d="M25.5 33.5l-3.2 5h2.8l-1.6 4.5 5-6h-2.8l2-3.5z"/>`;
+const fog=`<path d="M15 21h20M12 26h26M16 31h18" stroke="${PALE}" stroke-width="2.6" stroke-linecap="round"/>`;
+function icon(code,night){
+  let a;
+  const small=night?moonArt(30,16,5):sunArt(19.5,19,4.6);
+  if(code===0) a=night?moonArt(26,19,8):sunArt(25,25,6.5);
+  else if(code===1||code===2) a=small+cloudArt(15,12,1.05,CLOUD);
+  else if(code===3) a=cloudArt(10,11,.9,PALE)+cloudArt(15,14,1.05,CLOUD);
+  else if(code===45||code===48) a=fog;
+  else if(code>=95) a=cloudArt(13,9,1.15,CLOUD)+bolt;
+  else if((code>=71&&code<=77)||code===85||code===86) a=cloudArt(13,9,1.15,CLOUD)+snow;
+  else if(code>=51) a=cloudArt(13,9,1.15,CLOUD)+rain;
+  else a=cloudArt(13,12,1.15,CLOUD);
+  return `<svg class="icon" viewBox="0 0 50 50" aria-hidden="true"><defs><filter id="sh" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="1.6" stdDeviation="1.3" flood-color="#000" flood-opacity=".16"/></filter></defs><g filter="url(#sh)">${a}</g></svg>`;
 }
-const DESC={0:"clear sky",1:"mostly clear",2:"partly cloudy",3:"overcast",45:"fog",48:"freezing fog",51:"light drizzle",53:"drizzle",55:"heavy drizzle",
- 56:"freezing drizzle",57:"freezing drizzle",61:"light rain",63:"rain",65:"heavy rain",66:"freezing rain",67:"freezing rain",71:"light snow",73:"snow",
- 75:"heavy snow",77:"snow grains",80:"rain showers",81:"rain showers",82:"heavy showers",85:"snow showers",86:"snow showers",95:"thunderstorms",96:"storms with hail",99:"storms with hail"};
+const DESC={0:"clear sky",1:"few clouds",2:"scattered clouds",3:"overcast clouds",45:"fog",48:"fog",
+ 51:"light intensity drizzle",53:"drizzle",55:"heavy intensity drizzle",56:"freezing drizzle",57:"freezing drizzle",
+ 61:"light rain",63:"moderate rain",65:"heavy intensity rain",66:"freezing rain",67:"freezing rain",
+ 71:"light snow",73:"snow",75:"heavy snow",77:"snow",80:"light intensity shower rain",81:"shower rain",82:"heavy intensity shower rain",
+ 85:"light shower snow",86:"heavy shower snow",95:"thunderstorm",96:"thunderstorm with hail",99:"thunderstorm with hail"};
 
-const $=id=>document.getElementById(id);
-const q=$("q"), results=$("results"), out=$("out");
-let matches=[], active=-1, timer=null;
-function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-function load(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
-function label(p){const parts=[p.name]; if(p.admin1&&p.admin1!==p.name) parts.push(p.admin1); if(p.country_code!=="US") parts.push(p.country); return parts.join(", ")}
+/* ---------- layout: same breakpoints as the Seguin widget ---------- */
+const wx=document.getElementById("wx");
+let wide=false;
+function layout(){const w=window.innerWidth;wx.classList.toggle("w-md",w>=476&&w<672);wx.classList.toggle("w-lg",w>=672);
+  const nowWide=w>=672; if(nowWide!==wide){wide=nowWide; if(last) render(last)}}
+window.addEventListener("resize",layout);
 
+/* ---------- search ---------- */
+const STATES={AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming",DC:"District of Columbia"};
+const slot=document.getElementById("nameSlot");
+let place=null, last=null, matches=[], active=-1, timer=null, input=null, box=null;
+function store(v){try{localStorage.setItem("tripWeatherPlace",JSON.stringify(v))}catch(e){}}
+function load(){try{return JSON.parse(localStorage.getItem("tripWeatherPlace"))}catch(e){return null}}
+const label=p=>[p.name,p.admin1&&p.admin1!==p.name?p.admin1:null,p.country_code!=="US"?p.country:null].filter(Boolean).join(", ");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function showName(){
+  slot.innerHTML=`<b class="place" title="${esc(label(place))} — click to change">${esc(place.name.toUpperCase())}</b>`;
+  slot.querySelector(".place").onclick=openSearch;
+}
+function openSearch(){
+  slot.innerHTML=`<div class="search"><input id="q" type="text" placeholder="Type a city…" autocomplete="off" aria-label="Search location"><div class="results" id="results"></div></div>`;
+  input=document.getElementById("q"); box=document.getElementById("results");
+  input.focus();
+  input.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>search(false),300)});
+  input.addEventListener("keydown",e=>{
+    if(e.key==="ArrowDown"&&matches.length){active=(active+1)%matches.length;list();e.preventDefault()}
+    else if(e.key==="ArrowUp"&&matches.length){active=(active-1+matches.length)%matches.length;list();e.preventDefault()}
+    else if(e.key==="Enter"){e.preventDefault(); if(active>=0&&matches[active]) choose(matches[active]); else search(true)}
+    else if(e.key==="Escape"&&place){matches=[];showName()}
+  });
+  input.addEventListener("blur",()=>setTimeout(()=>{if(place&&input&&document.activeElement!==input&&!input.value.trim())showName()},200));
+  box.addEventListener("mousedown",e=>{const b=e.target.closest("button"); if(b){e.preventDefault();choose(matches[+b.dataset.i])}});
+}
+function list(){
+  if(!matches.length){box.style.display="none";return}
+  box.innerHTML=matches.map((p,i)=>`<button data-i="${i}" class="${i===active?"active":""}">${esc(label(p))}${p.population?` <small>· pop. ${p.population.toLocaleString()}</small>`:""}</button>`).join("");
+  box.style.display="block";
+}
 async function geocode(text){
   const [first,...rest]=text.split(",").map(s=>s.trim()).filter(Boolean);
   if(!first) return [];
   const j=await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(first)}&count=20&language=en&format=json`)).json();
-  let list=j.results||[];
+  let l=j.results||[];
   if(rest.length){
     const want=rest.join(" ").toLowerCase(), full=(STATES[rest[0].toUpperCase()]||"").toLowerCase();
-    const f=list.filter(p=>{const a=(p.admin1||"").toLowerCase(),c=(p.country||"").toLowerCase(),cc=(p.country_code||"").toLowerCase();
+    const f=l.filter(p=>{const a=(p.admin1||"").toLowerCase(),c=(p.country||"").toLowerCase(),cc=(p.country_code||"").toLowerCase();
       return (full&&a===full)||a.startsWith(want)||c.startsWith(want)||cc===want});
-    if(f.length) list=f;
+    if(f.length) l=f;
   }
-  return list.slice(0,6);
-}
-function showResults(){
-  if(!matches.length){results.style.display="none";return}
-  results.innerHTML=matches.map((p,i)=>`<button data-i="${i}" class="${i===active?"active":""}">${label(p)}${p.population?` <small>· pop. ${p.population.toLocaleString()}</small>`:""}</button>`).join("");
-  results.style.display="block";
+  return l.slice(0,6);
 }
 async function search(pickFirst){
-  const text=q.value.trim(); if(text.length<2){matches=[];showResults();return}
+  const text=input.value.trim(); if(text.length<2){matches=[];list();return}
   try{ matches=await geocode(text); active=-1;
-    if(pickFirst){ if(matches[0]) choose(matches[0]); else {out.innerHTML=`<div class="msg">No place found for “${text}”. Try just the city name.</div>`; matches=[]; showResults();} }
-    else showResults();
-  }catch(e){ out.innerHTML=`<div class="msg">Couldn't reach the location search. Try again.</div>` }
+    if(pickFirst){ if(matches[0]) choose(matches[0]); else {matches=[];list();setMsg(`No place found for “${esc(text)}”.`)} }
+    else list();
+  }catch(e){ setMsg("Couldn't reach the location search.") }
 }
+function setMsg(m){document.getElementById("nowDesc").innerHTML=`<div class="msg">${m}</div>`}
 function choose(p){
-  matches=[]; showResults(); q.value="";
-  store("tripWeatherPlace",{name:p.name,admin1:p.admin1,country:p.country,country_code:p.country_code,latitude:p.latitude,longitude:p.longitude});
-  forecast(p);
-}
-const time=iso=>new Date(iso).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
-
-async function forecast(p){
-  out.innerHTML=`<div class="msg">Loading…</div>`;
-  const url=`https://api.open-meteo.com/v1/forecast?latitude=${p.latitude}&longitude=${p.longitude}`+
-    `&current=temperature_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise`+
-    `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=3`;
-  try{
-    const w=await (await fetch(url)).json(), c=w.current, d=w.daily;
-    const days=d.time.map((t,i)=>`<div class="day">
-        <div class="d">${new Date(t+"T12:00").toLocaleDateString("en-US",{weekday:"short"})}</div>
-        ${icon(d.weather_code[i])}
-        <div class="hl"><div class="hi">${Math.round(d.temperature_2m_max[i])} ºF</div><div class="lo">${Math.round(d.temperature_2m_min[i])} ºF</div></div>
-      </div>`).join("");
-    out.innerHTML=`
-      <div class="place" title="${label(p)}">${p.name}</div>
-      <div class="label">WEATHER</div>
-      <div class="big">${icon(c.weather_code)}</div>
-      <div class="temp">${Math.round(c.temperature_2m)} ºF</div>
-      <div class="desc">${DESC[c.weather_code]||""}</div>
-      <div class="extra">${p.admin1&&p.admin1!==p.name?p.admin1+" · ":""}sunrise ${time(d.sunrise[0])} · wind ${Math.round(c.wind_speed_10m)} mph</div>
-      <div class="days">${days}</div>`;
-  }catch(e){ out.innerHTML=`<div class="msg">Couldn't load the forecast. Try again in a moment.</div>` }
+  matches=[]; place={name:p.name,admin1:p.admin1,country:p.country,country_code:p.country_code,latitude:p.latitude,longitude:p.longitude};
+  store(place); showName(); forecast();
 }
 
-q.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>search(false),300)});
-q.addEventListener("keydown",e=>{
-  if(e.key==="ArrowDown"&&matches.length){active=(active+1)%matches.length;showResults();e.preventDefault()}
-  else if(e.key==="ArrowUp"&&matches.length){active=(active-1+matches.length)%matches.length;showResults();e.preventDefault()}
-  else if(e.key==="Enter"){e.preventDefault(); if(active>=0&&matches[active]) choose(matches[active]); else search(true)}
-  else if(e.key==="Escape"){matches=[];showResults()}
-});
-$("go").addEventListener("click",()=>search(true));
-results.addEventListener("click",e=>{const b=e.target.closest("button"); if(b) choose(matches[+b.dataset.i])});
-document.addEventListener("click",e=>{if(!e.target.closest(".search")){matches=[];showResults()}});
+/* ---------- forecast ---------- */
+async function forecast(){
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}`+
+    `&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min`+
+    `&temperature_unit=fahrenheit&timezone=auto&forecast_days=3`;
+  try{ last=await (await fetch(url)).json(); render(last) }
+  catch(e){ setMsg("Couldn't load the forecast.") }
+}
+function render(w){
+  const c=w.current, d=w.daily;
+  document.getElementById("nowIcon").innerHTML=icon(c.weather_code,c.is_day===0);
+  document.getElementById("nowTemp").textContent=`${Math.round(c.temperature_2m)} ºF`;
+  document.getElementById("nowDesc").textContent=DESC[c.weather_code]||"";
+  document.getElementById("days").innerHTML=d.time.map((t,i)=>`
+    <div class="day">
+      <h4 class="t"><span class="name">${new Date(t+"T12:00").toLocaleDateString("en-US",{weekday:wide?"long":"short"})}</span></h4>
+      <div class="iw">${icon(d.weather_code[i],false)}</div>
+      <div class="deg"><div><h4 class="t hi">${Math.round(d.temperature_2m_max[i])} ºF</h4></div><div><h4 class="t">${Math.round(d.temperature_2m_min[i])} ºF</h4></div></div>
+    </div>`).join("");
+}
 
-const saved=load("tripWeatherPlace"), param=new URLSearchParams(location.search).get("q");
-if(param){q.value=param;search(true)} else if(saved){forecast(saved)}
+/* ---------- start: link ?q=, else last place searched, else ask ---------- */
+layout();
+const param=new URLSearchParams(location.search).get("q"), saved=load();
+if(param){openSearch();input.value=param;search(true)}
+else if(saved){place=saved;showName();forecast()}
+else{openSearch()}
 </script>
 </body>
 </html>
