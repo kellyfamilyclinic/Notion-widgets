@@ -12,6 +12,14 @@
   body{display:flex;flex-direction:column}
   .content{flex:1 1 0%;min-height:0;width:100%;overflow-y:auto}
   .foot{height:26px;flex:0 0 26px}            /* same bottom space as the Seguin widget */
+  /* recent places: sits below the weather area, which keeps the Seguin widget's size */
+  .recent{flex:0 0 auto;border-top:1px solid #efeeec;padding:7px 10px 9px;text-align:center}
+  .recent:empty{display:none}
+  .recent .lbl{display:block;font-size:10px;letter-spacing:1px;color:#9b9a97;font-weight:500;margin-bottom:5px}
+  .chip{display:inline-block;margin:2px 2px;padding:2px 9px;border:1px solid #e9e9e7;border-radius:12px;background:#fff;
+    font:inherit;font-size:12px;line-height:16px;color:#37352f;cursor:pointer;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;vertical-align:top}
+  .chip:hover{background:#f1f1ef}
+  .chip.on{background:#37352f;border-color:#37352f;color:#fff;cursor:default}
   .center{height:100%;display:flex;justify-content:center;flex:1 1 0%;padding:16px}
   /* Layout follows the same size rules as the Seguin widget.
      .v = vertical (block narrower than tall, or under 250px wide); otherwise horizontal.
@@ -87,6 +95,7 @@
   <div class="daily"><div class="days" id="days"></div></div>
 </div></div></div>
 <div class="foot"></div>
+<div class="recent" id="recent"></div>
 
 <script>
 /* ---------- icons (original artwork: flat sun / cloud with a soft shadow) ---------- */
@@ -125,7 +134,7 @@ const wx=document.getElementById("wx");
 let wide=false;
 function layout(){
   const w=Math.max(document.documentElement.clientWidth,window.innerWidth||0),
-        h=Math.max(document.documentElement.clientHeight,window.innerHeight||0);
+        h=Math.max(document.documentElement.clientHeight,window.innerHeight||0)-document.getElementById("recent").offsetHeight;
   const v=w<h||w<250, min=v?(h<=395||w<=260):(w<=365), stack=w<=670;
   wx.classList.toggle("v",v); wx.classList.toggle("min",min); wx.classList.toggle("stack",stack);
   const nowWide=!v&&!stack; if(nowWide!==wide){wide=nowWide; if(last) render(last)}}
@@ -137,6 +146,21 @@ const slot=document.getElementById("nameSlot");
 let place=null, last=null, matches=[], active=-1, timer=null, input=null, box=null;
 function store(v){try{localStorage.setItem("tripWeatherPlace",JSON.stringify(v))}catch(e){}}
 function load(){try{return JSON.parse(localStorage.getItem("tripWeatherPlace"))}catch(e){return null}}
+
+/* ---------- recent places: last 5 unique searches, newest first ---------- */
+const same=(a,b)=>Math.abs(a.latitude-b.latitude)<0.01&&Math.abs(a.longitude-b.longitude)<0.01;
+function loadRecent(){try{return JSON.parse(localStorage.getItem("tripWeatherRecent"))||[]}catch(e){return []}}
+let recent=loadRecent();
+function saveRecent(){try{localStorage.setItem("tripWeatherRecent",JSON.stringify(recent))}catch(e){}}
+function addRecent(p){recent=[p,...recent.filter(r=>!same(r,p))].slice(0,5);saveRecent()}
+function drawRecent(){
+  const el=document.getElementById("recent");
+  el.innerHTML=recent.length?`<span class="lbl">RECENT</span>`+recent.map((r,i)=>
+    `<button class="chip${place&&same(r,place)?" on":""}" data-i="${i}" title="${esc(label(r))}">${esc(r.name)}</button>`).join(""):"";
+  el.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{const r=recent[+b.dataset.i]; if(place&&same(r,place))return;
+    place=r; store(place); showName(); drawRecent(); forecast()});
+  layout();
+}
 const label=p=>[p.name,p.admin1&&p.admin1!==p.name?p.admin1:null,p.country_code!=="US"?p.country:null].filter(Boolean).join(", ");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -198,7 +222,7 @@ async function search(pickFirst){
 function setMsg(m){document.getElementById("nowDesc").innerHTML=`<div class="msg">${m}</div>`}
 function choose(p){
   matches=[]; place={name:p.name,admin1:p.admin1,country:p.country,country_code:p.country_code,latitude:p.latitude,longitude:p.longitude};
-  store(place); showName(); closeSearch(); forecast();
+  store(place); addRecent(place); drawRecent(); showName(); closeSearch(); forecast();
 }
 
 /* ---------- forecast ---------- */
@@ -226,7 +250,7 @@ function render(w){
 layout();
 const param=new URLSearchParams(location.search).get("q"), saved=load();
 if(param){openSearch();input.value=param;search(true)}
-else if(saved){place=saved;showName();forecast()}
+else if(saved){place=saved; if(!recent.length) addRecent(saved); drawRecent(); showName(); forecast()}
 else{openSearch()}
 </script>
 </body>
