@@ -5,62 +5,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Trip Weather</title>
 <style>
-  :root{
-    --bg:#ffffff; --card:#f7f6f3; --text:#37352f; --muted:#787774; --line:#e9e9e7;
-    --accent:#2e7d5b; --hover:#efeeeb;
-  }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --bg:#191919; --card:#252525; --text:#e6e6e4; --muted:#9b9a97; --line:#373737;
-      --accent:#5fbf8f; --hover:#2f2f2f;
-    }
-  }
-  :root[data-theme="dark"]{
-    --bg:#191919; --card:#252525; --text:#e6e6e4; --muted:#9b9a97; --line:#373737;
-    --accent:#5fbf8f; --hover:#2f2f2f;
-  }
+  :root{ --text:#37352f; --muted:#9b9a97; --line:#e9e9e7; --bg:#ffffff; --hover:#f1f1ef; }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--text);
-    font:14px/1.4 ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
-  .wrap{max-width:420px;margin:0 auto;padding:10px}
-  .search{position:relative}
-  .search input{width:100%;padding:9px 34px 9px 10px;border:1px solid var(--line);border-radius:8px;
-    background:var(--card);color:var(--text);font-size:14px;outline:none}
-  .search input:focus{border-color:var(--accent)}
-  .search .go{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;
-    color:var(--muted);font-size:16px;cursor:pointer;padding:4px}
-  .results{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--bg);border:1px solid var(--line);
-    border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.12);z-index:10;overflow:hidden;display:none}
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px}
+  .wrap{max-width:320px;margin:0 auto;padding:12px 14px 16px;text-align:center}
+
+  .search{position:relative;margin:0 auto 14px;max-width:240px}
+  .search input{width:100%;padding:6px 26px 6px 4px;border:0;border-bottom:1px solid var(--line);
+    background:transparent;color:var(--text);font:inherit;font-size:13px;text-align:center;outline:none}
+  .search input::placeholder{color:var(--muted)}
+  .search input:focus{border-bottom-color:var(--text)}
+  .search .go{position:absolute;right:0;top:50%;transform:translateY(-50%);border:0;background:none;
+    color:var(--muted);cursor:pointer;padding:4px;line-height:0}
+  .results{position:absolute;left:-20px;right:-20px;top:calc(100% + 4px);background:var(--bg);border:1px solid var(--line);
+    border-radius:6px;box-shadow:0 6px 18px rgba(15,15,15,.1);z-index:10;overflow:hidden;display:none;text-align:left}
   .results button{display:block;width:100%;text-align:left;padding:8px 10px;border:0;background:none;
-    color:var(--text);font-size:13px;cursor:pointer;border-bottom:1px solid var(--line)}
-  .results button:last-child{border-bottom:0}
+    color:var(--text);font:inherit;font-size:13px;cursor:pointer}
   .results button:hover,.results button.active{background:var(--hover)}
   .results small{color:var(--muted)}
-  .card{margin-top:10px;background:var(--card);border-radius:10px;padding:12px}
-  .place{font-weight:600;font-size:15px}
-  .sub{color:var(--muted);font-size:12px}
-  .now{display:flex;align-items:center;gap:10px;margin:8px 0 6px}
-  .now .icon{font-size:38px;line-height:1}
-  .now .temp{font-size:34px;font-weight:600}
-  .now .desc{color:var(--muted);font-size:13px}
-  .facts{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:12px;color:var(--muted);
-    padding:8px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-  .facts b{color:var(--text);font-weight:600}
-  .days{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:8px;text-align:center}
-  .day{font-size:12px}
-  .day .d{color:var(--muted)}
-  .day .i{font-size:20px;margin:2px 0}
-  .day .hl b{font-weight:600}
-  .day .hl span{color:var(--muted)}
-  .day .p{color:var(--accent);font-size:11px}
-  .msg{color:var(--muted);font-size:13px;padding:14px 4px;text-align:center}
+
+  .place{font-weight:700;text-transform:uppercase;line-height:1.25}
+  .label{font-weight:100;line-height:1.25}
+  .big{margin:10px auto 6px;width:50px;height:50px}
+  .temp{font-size:24px;font-weight:500;margin-top:14px}
+  .desc{font-weight:500;margin-top:2px}
+  .extra{font-size:12px;color:var(--muted);margin-top:8px}
+
+  .days{margin:26px auto 0;max-width:200px}
+  .day{display:grid;grid-template-columns:1fr 50px 1fr;align-items:center;gap:8px;margin-bottom:22px}
+  .day .d{font-weight:500;letter-spacing:1px;text-align:center}
+  .day svg{width:30px;height:30px;margin:0 auto;display:block}
+  .day .hl{text-align:left;line-height:1.3}
+  .day .hi{font-weight:600}
+  .day .lo{font-weight:500}
+  .msg{color:var(--muted);font-size:13px;padding:24px 4px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="search">
-    <input id="q" type="text" placeholder="Search a city (e.g. Rockport, TX)" autocomplete="off" aria-label="Search location">
-    <button class="go" id="go" aria-label="Search">🔍</button>
+    <input id="q" type="text" placeholder="Search a place…" autocomplete="off" aria-label="Search location">
+    <button class="go" id="go" aria-label="Search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    </button>
     <div class="results" id="results"></div>
   </div>
   <div id="out"><div class="msg">Search for a place to see its forecast.</div></div>
@@ -68,92 +56,93 @@
 
 <script>
 const STATES={AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming",DC:"District of Columbia"};
-const CODES={0:["☀️","Clear"],1:["🌤️","Mostly clear"],2:["⛅","Partly cloudy"],3:["☁️","Overcast"],
- 45:["🌫️","Fog"],48:["🌫️","Freezing fog"],51:["🌦️","Light drizzle"],53:["🌦️","Drizzle"],55:["🌧️","Heavy drizzle"],
- 56:["🌧️","Freezing drizzle"],57:["🌧️","Freezing drizzle"],61:["🌦️","Light rain"],63:["🌧️","Rain"],65:["🌧️","Heavy rain"],
- 66:["🌧️","Freezing rain"],67:["🌧️","Freezing rain"],71:["🌨️","Light snow"],73:["🌨️","Snow"],75:["❄️","Heavy snow"],
- 77:["🌨️","Snow grains"],80:["🌦️","Showers"],81:["🌧️","Showers"],82:["⛈️","Heavy showers"],85:["🌨️","Snow showers"],
- 86:["❄️","Snow showers"],95:["⛈️","Thunderstorms"],96:["⛈️","Storms, hail"],99:["⛈️","Storms, hail"]};
-const code=c=>CODES[c]||["🌡️","—"];
+
+/* Simple flat icons: orange sun, blue cloud */
+const SUN='#f7a823', CLOUD='#5aa0ea', LIGHT='#c9def7', DROP='#8fbdf0';
+const sun=(cx,cy,r)=>{let s=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${SUN}"/>`;
+  for(let i=0;i<8;i++){const a=i*Math.PI/4,x1=cx+Math.cos(a)*(r+3),y1=cy+Math.sin(a)*(r+3),x2=cx+Math.cos(a)*(r+7),y2=cy+Math.sin(a)*(r+7);
+    s+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${SUN}" stroke-width="2.4" stroke-linecap="round"/>`}
+  return s};
+const cloud=(dx,dy,c)=>`<path transform="translate(${dx} ${dy})" fill="${c}" d="M14 38h22a9 9 0 0 0 0-18 12 12 0 0 0-23-2A10 10 0 0 0 14 38z"/>`;
+const drops=`<path d="M20 42l-2 6M28 42l-2 6M36 42l-2 6" stroke="${DROP}" stroke-width="2.4" stroke-linecap="round"/>`;
+const bolt=`<path d="M27 40l-5 8h5l-3 7 8-10h-5l3-5z" fill="${SUN}"/>`;
+const flakes=`<g fill="${DROP}"><circle cx="19" cy="46" r="2"/><circle cx="27" cy="49" r="2"/><circle cx="35" cy="46" r="2"/></g>`;
+const fog=`<path d="M10 22h30M6 30h38M12 38h28" stroke="${LIGHT}" stroke-width="4" stroke-linecap="round"/>`;
+function icon(c){
+  let b;
+  if(c===0) b=sun(25,25,10);
+  else if(c===1||c===2) b=sun(18,16,8)+cloud(4,6,CLOUD);
+  else if(c===3) b=cloud(-6,2,LIGHT)+cloud(2,6,CLOUD);
+  else if(c===45||c===48) b=fog;
+  else if(c>=95) b=cloud(0,-2,CLOUD)+bolt;
+  else if((c>=71&&c<=77)||c===85||c===86) b=cloud(0,-2,CLOUD)+flakes;
+  else if(c>=51) b=cloud(0,-2,CLOUD)+drops;
+  else b=cloud(0,4,CLOUD);
+  return `<svg viewBox="0 0 50 50" aria-hidden="true">${b}</svg>`;
+}
+const DESC={0:"clear sky",1:"mostly clear",2:"partly cloudy",3:"overcast",45:"fog",48:"freezing fog",51:"light drizzle",53:"drizzle",55:"heavy drizzle",
+ 56:"freezing drizzle",57:"freezing drizzle",61:"light rain",63:"rain",65:"heavy rain",66:"freezing rain",67:"freezing rain",71:"light snow",73:"snow",
+ 75:"heavy snow",77:"snow grains",80:"rain showers",81:"rain showers",82:"heavy showers",85:"snow showers",86:"snow showers",95:"thunderstorms",96:"storms with hail",99:"storms with hail"};
+
 const $=id=>document.getElementById(id);
 const q=$("q"), results=$("results"), out=$("out");
 let matches=[], active=-1, timer=null;
-
-function store(k,v){try{v===undefined?null:localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 function load(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
-
-function label(p){
-  const parts=[p.name];
-  if(p.admin1&&p.admin1!==p.name) parts.push(p.admin1);
-  if(p.country_code!=="US") parts.push(p.country);
-  return parts.join(", ");
-}
+function label(p){const parts=[p.name]; if(p.admin1&&p.admin1!==p.name) parts.push(p.admin1); if(p.country_code!=="US") parts.push(p.country); return parts.join(", ")}
 
 async function geocode(text){
   const [first,...rest]=text.split(",").map(s=>s.trim()).filter(Boolean);
   if(!first) return [];
-  const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(first)}&count=20&language=en&format=json`);
-  const j=await r.json(); let list=j.results||[];
+  const j=await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(first)}&count=20&language=en&format=json`)).json();
+  let list=j.results||[];
   if(rest.length){
-    const want=rest.join(" ").toLowerCase();
-    const full=(STATES[rest[0].toUpperCase()]||"").toLowerCase();
-    const f=list.filter(p=>{
-      const a=(p.admin1||"").toLowerCase(), c=(p.country||"").toLowerCase(), cc=(p.country_code||"").toLowerCase();
-      return (full&&a===full)||a.startsWith(want)||c.startsWith(want)||cc===want;
-    });
+    const want=rest.join(" ").toLowerCase(), full=(STATES[rest[0].toUpperCase()]||"").toLowerCase();
+    const f=list.filter(p=>{const a=(p.admin1||"").toLowerCase(),c=(p.country||"").toLowerCase(),cc=(p.country_code||"").toLowerCase();
+      return (full&&a===full)||a.startsWith(want)||c.startsWith(want)||cc===want});
     if(f.length) list=f;
   }
   return list.slice(0,6);
 }
-
 function showResults(){
   if(!matches.length){results.style.display="none";return}
   results.innerHTML=matches.map((p,i)=>`<button data-i="${i}" class="${i===active?"active":""}">${label(p)}${p.population?` <small>· pop. ${p.population.toLocaleString()}</small>`:""}</button>`).join("");
   results.style.display="block";
 }
-
 async function search(pickFirst){
   const text=q.value.trim(); if(text.length<2){matches=[];showResults();return}
   try{ matches=await geocode(text); active=-1;
     if(pickFirst){ if(matches[0]) choose(matches[0]); else {out.innerHTML=`<div class="msg">No place found for “${text}”. Try just the city name.</div>`; matches=[]; showResults();} }
     else showResults();
-  }catch(e){ out.innerHTML=`<div class="msg">Couldn't reach the location search. Check the connection and try again.</div>` }
+  }catch(e){ out.innerHTML=`<div class="msg">Couldn't reach the location search. Try again.</div>` }
 }
-
 function choose(p){
-  matches=[]; showResults(); q.value=label(p);
+  matches=[]; showResults(); q.value="";
   store("tripWeatherPlace",{name:p.name,admin1:p.admin1,country:p.country,country_code:p.country_code,latitude:p.latitude,longitude:p.longitude});
   forecast(p);
 }
-
-function time(iso){ return new Date(iso).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}) }
+const time=iso=>new Date(iso).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
 
 async function forecast(p){
-  out.innerHTML=`<div class="msg">Loading forecast…</div>`;
+  out.innerHTML=`<div class="msg">Loading…</div>`;
   const url=`https://api.open-meteo.com/v1/forecast?latitude=${p.latitude}&longitude=${p.longitude}`+
-    `&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_gusts_10m`+
-    `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset`+
-    `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=5`;
+    `&current=temperature_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise`+
+    `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=3`;
   try{
-    const w=await (await fetch(url)).json(); const c=w.current, d=w.daily; const [ic,tx]=code(c.weather_code);
-    const days=d.time.map((t,i)=>{
-      const [di]=code(d.weather_code[i]);
-      const name=i===0?"Today":new Date(t+"T12:00").toLocaleDateString([], {weekday:"short"});
-      return `<div class="day"><div class="d">${name}</div><div class="i">${di}</div>
-        <div class="hl"><b>${Math.round(d.temperature_2m_max[i])}°</b> <span>${Math.round(d.temperature_2m_min[i])}°</span></div>
-        <div class="p">${d.precipitation_probability_max[i]??0}% 💧</div></div>`;
-    }).join("");
-    out.innerHTML=`<div class="card">
-      <div class="place">${label(p)}</div>
-      <div class="sub">Local time zone: ${w.timezone.replace(/_/g," ")}</div>
-      <div class="now"><div class="icon">${ic}</div><div><div class="temp">${Math.round(c.temperature_2m)}°F</div>
-        <div class="desc">${tx} · feels ${Math.round(c.apparent_temperature)}°</div></div></div>
-      <div class="facts">
-        <div>Wind <b>${Math.round(c.wind_speed_10m)} mph</b></div><div>Gusts <b>${Math.round(c.wind_gusts_10m)} mph</b></div>
-        <div>Humidity <b>${c.relative_humidity_2m}%</b></div><div>Rain today <b>${d.precipitation_probability_max[0]??0}%</b></div>
-        <div>Sunrise <b>${time(d.sunrise[0])}</b></div><div>Sunset <b>${time(d.sunset[0])}</b></div>
-      </div>
-      <div class="days">${days}</div></div>`;
+    const w=await (await fetch(url)).json(), c=w.current, d=w.daily;
+    const days=d.time.map((t,i)=>`<div class="day">
+        <div class="d">${new Date(t+"T12:00").toLocaleDateString("en-US",{weekday:"short"})}</div>
+        ${icon(d.weather_code[i])}
+        <div class="hl"><div class="hi">${Math.round(d.temperature_2m_max[i])} ºF</div><div class="lo">${Math.round(d.temperature_2m_min[i])} ºF</div></div>
+      </div>`).join("");
+    out.innerHTML=`
+      <div class="place" title="${label(p)}">${p.name}</div>
+      <div class="label">WEATHER</div>
+      <div class="big">${icon(c.weather_code)}</div>
+      <div class="temp">${Math.round(c.temperature_2m)} ºF</div>
+      <div class="desc">${DESC[c.weather_code]||""}</div>
+      <div class="extra">${p.admin1&&p.admin1!==p.name?p.admin1+" · ":""}sunrise ${time(d.sunrise[0])} · wind ${Math.round(c.wind_speed_10m)} mph</div>
+      <div class="days">${days}</div>`;
   }catch(e){ out.innerHTML=`<div class="msg">Couldn't load the forecast. Try again in a moment.</div>` }
 }
 
@@ -168,9 +157,8 @@ $("go").addEventListener("click",()=>search(true));
 results.addEventListener("click",e=>{const b=e.target.closest("button"); if(b) choose(matches[+b.dataset.i])});
 document.addEventListener("click",e=>{if(!e.target.closest(".search")){matches=[];showResults()}});
 
-// Start with the last place she searched, or one passed in the link (?q=Rockport, TX)
 const saved=load("tripWeatherPlace"), param=new URLSearchParams(location.search).get("q");
-if(param){q.value=param;search(true)} else if(saved){q.value=label(saved);forecast(saved)}
+if(param){q.value=param;search(true)} else if(saved){forecast(saved)}
 </script>
 </body>
 </html>
