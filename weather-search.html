@@ -250,8 +250,12 @@ function render(w){
 layout();
 const param=new URLSearchParams(location.search).get("q"), saved=load();
 if(param){openSearch();input.value=param;search(true)}
-else if(saved){place=saved; if(!recent.length) addRecent(saved); drawRecent(); showName(); forecast()}
-else{openSearch()}
+else{
+  /* nothing saved in this browser yet (or storage blocked): start on Seguin instead of a blank widget */
+  place=saved||{name:"Seguin",admin1:"Texas",country:"United States",country_code:"US",latitude:29.56884,longitude:-97.96473};
+  if(!recent.length) addRecent(place);
+  drawRecent(); showName(); forecast();
+}
 </script>
 </body>
 </html>
